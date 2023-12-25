@@ -53,8 +53,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pre/app_router.dart';
 import 'package:pre/layout/cupit/app_cubit.dart';
-import 'package:pre/modules/chat/chat_screen.dart';
-import 'package:pre/shared/services/local/cache_data.dart';
 import 'package:pre/shared/styles/my_dark_theme.dart';
 
 import 'firebase_options.dart';
@@ -64,65 +62,38 @@ import 'shared/styles/mylight_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await CacheHelper.init();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  isDarkFromShared = CacheHelper.getCacheData(key: 'isDark');
-  onBoarding = CacheHelper.getCacheData(key: 'onBoarding');
-  token = CacheHelper.getCacheData(key: 'token');
-
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(
-    MyApp(
-      isDarkFromShared: isDarkFromShared ?? false,
-      appRouter: AppRouter(),
+    BlocProvider(
+      create: (_) => AppCubit()..getCurrentUserData(),
+      child: MyApp(
+        appRouter: AppRouter(),
+      ),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  final bool isDarkFromShared;
   final AppRouter appRouter;
 
-  const MyApp(
-      {super.key, required this.isDarkFromShared, required this.appRouter});
+  const MyApp({super.key, required this.appRouter});
 
   @override
   Widget build(BuildContext context) {
-    // final AppRouter _appRouter = AppRouter();
-    return MultiBlocProvider(
-      providers: [
-        _appcubit(),
-      ],
-      child: BlocConsumer<AppCubit, AppState>(
-        listener: _listener,
-        builder: _buildMaterialApp,
-      ),
+    return BlocBuilder<AppCubit, AppState>(
+      builder: (context, state) {
+        AppCubit appCubit = AppCubit.get(context);
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          onGenerateRoute: appRouter.generateRoute,
+          themeMode:
+              appCubit.isDarkFromShared ? ThemeMode.dark : ThemeMode.light,
+          theme: myLightTheme(context),
+          darkTheme: myDarkTheme(context),
+          onUnknownRoute: appRouter.generateRoute,
+          // home: const ChatScreen(),
+        );
+      },
     );
-  }
-
-  BlocProvider<AppCubit> _appcubit() {
-    return BlocProvider(
-      create: (_) => AppCubit()
-        ..saveAppModeInFirstLaunch(isDarkFromShared: isDarkFromShared),
-    );
-  }
-
-  void _listener(context, state) {}
-
-  MaterialApp _buildMaterialApp(BuildContext context, state) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      // onGenerateRoute: appRouter.generateRoute,
-      themeMode: _themeMode(context),
-      theme: myLightTheme(context),
-      darkTheme: myDarkTheme(context),
-      //  onUnknownRoute: appRouter.generateRoute,
-      home: const ChatScreen(),
-    );
-  }
-
-  ThemeMode _themeMode(context) {
-    return AppCubit.get(context).isDark ? ThemeMode.dark : ThemeMode.light;
   }
 }

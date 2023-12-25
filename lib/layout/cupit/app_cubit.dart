@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pre/modules/chat/chat_screen.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../app_router.dart';
@@ -19,7 +20,7 @@ import '../../modules/edit_profile/edit_profile_screen.dart';
 import '../../modules/home_screen/home_screen.dart';
 import '../../modules/new_tasks/new_tasks_screen.dart';
 import '../../modules/notes.dart';
-import '../../modules/settings/settings_screen.dart';
+import '../../modules/settings/setting_screen.dart';
 import '../../shared/services/local/cache_data.dart';
 import '../../shared/services/local/cahce_helper.dart';
 
@@ -37,7 +38,7 @@ class AppCubit extends Cubit<AppState> {
   List<String> appBarTitles = [
     'Home',
     'notes',
-    // 'chat',
+    'chat',
     'Settings',
     'accaunt',
   ];
@@ -45,8 +46,8 @@ class AppCubit extends Cubit<AppState> {
   List<Widget> screens = [
     const HomeScreen(),
     NoteScreen(),
-    //  ChatsScreen(),
-    const SettingsScreen(),
+    const ChatScreen(),
+    const SettingScreen(),
     const EditProfileScreen(),
   ];
 
@@ -66,31 +67,25 @@ class AppCubit extends Cubit<AppState> {
     emit(ChangeBottomNav());
   }
 
-  bool isDark = false;
-
-  void changeAppMode({bool? isDarkFromShared}) {
-    if (isDarkFromShared != null) {
-      isDark = isDarkFromShared;
-      emit(ChangeMode());
-    } else {
-      isDark = !isDark;
-      CacheHelper.setBoolData(key: 'isDark', value: isDark).then(
-        (value) {
-          emit(ChangeMode());
-        },
-      );
-    }
+  bool isDarkFromShared = (CacheHelper.getCacheData(key: 'isDark') == null)
+      ? false
+      : CacheHelper.getCacheData(key: 'isDark');
+  void changeAppMode() {
+    isDarkFromShared = !isDarkFromShared;
+    emit(ChangeModeOfApp());
+    print('📍 $isDarkFromShared');
+    CacheHelper.saveCacheData(key: 'isDark', value: isDarkFromShared);
   }
 
-  void saveAppModeInFirstLaunch({bool? isDarkFromShared}) {
-    if (isDarkFromShared != null) {
-      isDark = isDarkFromShared;
-      emit(ThemeLaunchMode());
-    } else {
-      CacheHelper.saveCacheData(key: 'isDark', value: isDark)
-          .then((_) => emit(ThemeLaunchMode()));
-    }
-  }
+  // void saveAppModeInFirstLaunch({bool? isDarkFromShared}) {
+  //   if (isDarkFromShared != null) {
+  //     isDark = isDarkFromShared;
+  //     emit(ThemeLaunchMode());
+  //   } else {
+  //     CacheHelper.saveCacheData(key: 'isDark', value: isDark)
+  //         .then((_) => emit(ThemeLaunchMode()));
+  //   }
+  // }
 
   int currentIndexx = 0;
   List<Widget> bodyScreens = [
@@ -105,16 +100,16 @@ class AppCubit extends Cubit<AppState> {
     emit(AppChangeBottomNavBarState());
   }
 
-  UserModel? currentUser;
   void getCurrentUserData() {
+    print("📍 ${CacheData.uId}");
     emit(GetCurrentUserLoading());
-
     FirebaseFirestore.instance
         .collection('users')
         .doc(CacheData.uId)
         .get()
         .then((value) {
-      currentUser = UserModel.fromMap(value.data());
+      CURRENTUSER = UserModel.fromMap(value.data());
+      print("📍 ${CURRENTUSER!.name}");
       emit(GetCurrentUserSuccess());
     }).catchError((error) {
       print('getCurrentUserData -- ${error.toString()}');
@@ -357,16 +352,16 @@ class AppCubit extends Cubit<AppState> {
       name: name,
       phone: phone,
       bio: bio,
-      image: profileImage == null ? currentUser!.image : profileImageUrl,
-      cover: coverImage == null ? currentUser!.cover : coverImageUrl,
-      email: currentUser!.email,
-      emailVerified: currentUser!.emailVerified,
-      uId: currentUser!.uId,
+      image: profileImage == null ? CURRENTUSER!.image : profileImageUrl,
+      cover: coverImage == null ? CURRENTUSER!.cover : coverImageUrl,
+      email: CURRENTUSER!.email,
+      emailVerified: CURRENTUSER!.emailVerified,
+      uId: CURRENTUSER!.uId,
     );
 
     CollectionReference users = FirebaseFirestore.instance.collection('users');
 
-    users.doc(currentUser!.uId).update(userModel.toMap()).then((_) {
+    users.doc(CURRENTUSER!.uId).update(userModel.toMap()).then((_) {
       getCurrentUserData();
     }).catchError((e) {
       print('_updateUserData -- ${e.toString()}');
@@ -395,9 +390,9 @@ class AppCubit extends Cubit<AppState> {
     required String text,
   }) {
     PostModel newPost = PostModel(
-      name: currentUser!.name,
-      uId: currentUser!.uId,
-      image: currentUser!.image,
+      name: CURRENTUSER!.name,
+      uId: CURRENTUSER!.uId,
+      image: CURRENTUSER!.image,
       dateTime: dateTime,
       text: text,
       postImage: postImageUrl,
@@ -445,7 +440,7 @@ class AppCubit extends Cubit<AppState> {
         .collection('posts')
         .doc(postId)
         .collection('likes')
-        .doc(currentUser!.uId)
+        .doc(CURRENTUSER!.uId)
         .set({
       'like': true,
     }).then((value) {
@@ -467,7 +462,7 @@ class AppCubit extends Cubit<AppState> {
       FirebaseFirestore.instance.collection('users').get().then((value) {
         for (var element in value.docs) {
           print(element.data()['uId']);
-          if (element.data()['uId'] != currentUser!.uId) {
+          if (element.data()['uId'] != CURRENTUSER!.uId) {
             allUsers.add(UserModel.fromMap(element.data()));
           }
           emit(GetAllUsersSuccess());
@@ -484,10 +479,7 @@ class AppCubit extends Cubit<AppState> {
     await FirebaseAuth.instance.signOut();
 
     Navigator.pushNamedAndRemoveUntil(
-      context,
-      AppRouter.loginScreen,
-      (route) => false,
-    );
+        context, AppRouter.loginScreen, (route) => false);
   }
 
   // chat
@@ -497,7 +489,7 @@ class AppCubit extends Cubit<AppState> {
     required String messagetext,
   }) {
     MessageModel message = MessageModel(
-      sinderId: currentUser!.uId,
+      sinderId: CURRENTUSER!.uId,
       recevierId: recevierId,
       messageDate: messageDate,
       messagetext: messagetext,
@@ -506,7 +498,7 @@ class AppCubit extends Cubit<AppState> {
     // add chat message to sinderId
     FirebaseFirestore.instance
         .collection('users')
-        .doc(currentUser!.uId)
+        .doc(CURRENTUSER!.uId)
         .collection('chats')
         .doc(recevierId)
         .collection('messages')
@@ -522,7 +514,7 @@ class AppCubit extends Cubit<AppState> {
         .collection('users')
         .doc(recevierId)
         .collection('chats')
-        .doc(currentUser!.uId)
+        .doc(CURRENTUSER!.uId)
         .collection('messages')
         .add(message.toMap())
         .then((value) {
@@ -538,7 +530,7 @@ class AppCubit extends Cubit<AppState> {
   }) {
     FirebaseFirestore.instance
         .collection('users')
-        .doc(currentUser!.uId)
+        .doc(CURRENTUSER!.uId)
         .collection('chats')
         .doc(recevierId)
         .collection('messages')

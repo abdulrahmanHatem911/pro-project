@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pre/models/user_model.dart';
+import 'package:pre/shared/services/local/cahce_helper.dart';
 
 part 'register_state.dart';
 
@@ -11,7 +12,6 @@ class RegisterCubit extends Cubit<RegisterState> {
 
   // make object of the cubit
   static RegisterCubit get(context) => BlocProvider.of(context);
-
 
   // userRegister
   void userRegister({
@@ -37,9 +37,9 @@ class RegisterCubit extends Cubit<RegisterState> {
         name: name,
         uId: userCredential.user!.uid,
       );
-
-
-     // emit(RegisterSuccess(userCredential: userCredential));
+      CacheHelper.saveCacheData(key: 'uId', value: userCredential.user!.uid);
+      CacheHelper.saveCacheData(key: 'onBoarding', value: true);
+      CacheHelper.saveCacheData(key: 'login', value: true);
     } on FirebaseAuthException catch (error) {
       if (error.code == 'weak-password') {
         print('userRegister -- The password provided is too weak.');
@@ -68,10 +68,10 @@ class RegisterCubit extends Cubit<RegisterState> {
       uId: uId,
       emailVerified: false,
       bio: 'write your bio ...',
-      image: 'https://images.pexels.com/photos/19467240/pexels-photo-19467240/free-photo-of-hand-holding-coffee-cup.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1 ',
-      cover: 'https://images.pexels.com/photos/19467240/pexels-photo-19467240/free-photo-of-hand-holding-coffee-cup.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1 ',
-
-
+      image:
+          'https://images.pexels.com/photos/19467240/pexels-photo-19467240/free-photo-of-hand-holding-coffee-cup.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1 ',
+      cover:
+          'https://images.pexels.com/photos/19467240/pexels-photo-19467240/free-photo-of-hand-holding-coffee-cup.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1 ',
     );
 
     FirebaseFirestore.instance

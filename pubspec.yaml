@@ -50,6 +50,8 @@ dependencies:
   flutter_conditional_rendering: ^2.0.0
   cloud_firestore: ^4.13.6
   http: ^1.1.2
+  dash_chat_2: ^0.0.19
+  chat_gpt_sdk: ^2.2.5
 
 
 

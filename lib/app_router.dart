@@ -51,9 +51,8 @@ class AppRouter {
   }
 
   MaterialPageRoute<dynamic> _startScreen() {
-    if (onBoarding != null) {
-      onBoarding = true;
-      if (token != null) {
+    if (onBoarding == true) {
+      if (ISLOGIN == true) {
         return _goToHomeLayoutScreen();
       } else {
         return _goToLoginScreen();
@@ -88,33 +87,20 @@ class AppRouter {
   }
 
   MaterialPageRoute<dynamic> _goToHomeLayoutScreen() {
-    return MaterialPageRoute(
-      builder: (_) => BlocProvider(
-        create: (_) => AppCubit()..screens,
-        child: const HomeLayoutScreen(),
-      ),
-    );
+    return MaterialPageRoute(builder: (_) => const HomeLayoutScreen());
   }
 
   static MaterialPageRoute<dynamic> _goToEditProfileScreen() {
-    return MaterialPageRoute(
-      builder: (_) => BlocProvider.value(
-        value: _AppCubit,
-        child: const EditProfileScreen(),
-      ),
-    );
+    return MaterialPageRoute(builder: (_) => const EditProfileScreen());
   }
 
   static MaterialPageRoute<dynamic> _goToChatDetailsScreen(settings) {
     final chatUser = settings.arguments;
 
     return MaterialPageRoute(
-      builder: (_) => BlocProvider.value(
-        value: _AppCubit,
-        child: const ChatDetailsScreen(
-            //  chatUser: chatUser,
-            ),
-      ),
+      builder: (_) => const ChatDetailsScreen(
+          //  chatUser: chatUser,
+          ),
     );
   }
 }

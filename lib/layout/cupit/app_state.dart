@@ -4,6 +4,7 @@ part of 'app_cubit.dart';
 abstract class AppState {}
 
 class AppInitial extends AppState {}
+
 class AppChangeBottomNavBarState extends AppState {}
 
 class AppCreateDatabaseLoadingState extends AppState {}
@@ -20,13 +21,10 @@ class AppDeleteDatabaseState extends AppState {}
 
 class ChangeBottomSheetState extends AppState {}
 
-
 class ThemeLaunchMode extends AppState {}
 
 class ThemeChangeMode extends AppState {}
 
-
-// getCurrentUserData
 class GetCurrentUserLoading extends AppState {}
 
 class GetCurrentUserSuccess extends AppState {}
@@ -57,20 +55,20 @@ class PostImageError extends AppState {}
 class PostImageRemove extends AppState {}
 
 // upload (profile / cover / post) image
-class UploadProfileImageSuccess extends AppState{}
+class UploadProfileImageSuccess extends AppState {}
 
 class UploadProfileImageError extends AppState {}
 
 class UploadCoverImageSuccess extends AppState {}
 
-class UploadCoverImageError extends AppState{}
+class UploadCoverImageError extends AppState {}
 
 class UploadPostImageSuccess extends AppState {}
 
-class UploadPostImageError extends AppState{}
+class UploadPostImageError extends AppState {}
 
 // update user data
-class UpdateUserLoading extends AppState{}
+class UpdateUserLoading extends AppState {}
 
 class UpdateUserError extends AppState {}
 
@@ -98,6 +96,7 @@ class LikePostsError extends AppState {
   final String error;
   LikePostsError(this.error);
 }
+
 class ChangeMode extends AppState {}
 
 // getAllUsers
@@ -116,3 +115,5 @@ class SendMessageSuccess extends AppState {}
 class SendMessageError extends AppState {}
 
 class GetMessageSuccess extends AppState {}
+
+class ChangeModeOfApp extends AppState {}

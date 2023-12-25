@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_conditional_rendering/conditional.dart';
@@ -12,16 +11,26 @@ import '../../shared/services/local/cahce_helper.dart';
 import '../../shared/styles/my_main.dart';
 import 'cupit/login_cubit.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({Key? key}) : super(key: key);
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({Key? key}) : super(key: key);
 
-  final _formKey = GlobalKey<FormState>();
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController _emailController = TextEditingController();
-    TextEditingController _passwordController = TextEditingController();
-
     return BlocConsumer<LoginCubit, LoginState>(
       listener: (context, state) {
         if (state is LoginError) {
@@ -29,7 +38,7 @@ class LoginScreen extends StatelessWidget {
         }
         if (state is LoginSucess) {
           CacheHelper.saveCacheData(key: 'uId', value: state.uId).then(
-                (_) {
+            (_) {
               CacheData.uId = CacheHelper.getCacheData(key: 'uId');
 
               Navigator.pushReplacementNamed(
@@ -41,7 +50,7 @@ class LoginScreen extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        LoginCubit _loginCubit = LoginCubit.get(context);
+        LoginCubit loginCubit = LoginCubit.get(context);
 
         return Scaffold(
           appBar: AppBar(),
@@ -50,7 +59,7 @@ class LoginScreen extends StatelessWidget {
             _emailController,
             _passwordController,
             state,
-            _loginCubit,
+            loginCubit,
           ),
         );
       },
@@ -58,12 +67,12 @@ class LoginScreen extends StatelessWidget {
   }
 
   Center _buildBody(
-      BuildContext context,
-      TextEditingController _emailController,
-      TextEditingController _passwordController,
-      LoginState state,
-      LoginCubit _loginCubit,
-      ) {
+    BuildContext context,
+    TextEditingController emailController,
+    TextEditingController passwordController,
+    LoginState state,
+    LoginCubit loginCubit,
+  ) {
     return Center(
       child: SingleChildScrollView(
         child: Padding(
@@ -73,29 +82,28 @@ class LoginScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Image(image:AssetImage(
-                  'assets/images/image5.png'
-                ) ,
-                width: double.infinity,
+                const Image(
+                  image: AssetImage('assets/images/image5.png'),
+                  width: double.infinity,
                   height: 300.0,
                 ),
                 Text(
                   'LOGIN',
                   style: Theme.of(context).textTheme.headlineMedium!.copyWith(
-                    color: MyMainColors.myBlack,
-                  ),
+                        color: MyMainColors.myBlack,
+                      ),
                 ),
                 Text(
                   'Login now to connect with world',
                   style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                    color: Colors.grey,
-                  ),
+                        color: Colors.grey,
+                      ),
                 ),
                 const SizedBox(
                   height: 30,
                 ),
                 defaultFormField(
-                  controller: _emailController,
+                  controller: emailController,
                   type: TextInputType.emailAddress,
                   validate: (String? value) {
                     if (value!.isEmpty) {
@@ -105,16 +113,14 @@ class LoginScreen extends StatelessWidget {
                   label: 'Email Adress',
                   prefix: Icons.email_outlined,
                 ),
-                const SizedBox(
-                  height: 15,
-                ),
+                const SizedBox(height: 15),
                 defaultFormField(
-                  controller: _passwordController,
+                  controller: passwordController,
                   type: TextInputType.visiblePassword,
-                  isPassword: _loginCubit.isPassword,
-                  suffix: _loginCubit.suffix,
+                  isPassword: loginCubit.isPassword,
+                  suffix: loginCubit.suffix,
                   suffixPressed: () {
-                    _loginCubit.changePasswordVisibality();
+                    loginCubit.changePasswordVisibality();
                   },
                   validate: (String? value) {
                     if (value!.isEmpty) {
@@ -122,12 +128,14 @@ class LoginScreen extends StatelessWidget {
                     }
                   },
                   onSubmit: (_) {
-                    _loginAuthorization(
-                      context,
-                      _emailController,
-                      _passwordController,
-                      _loginCubit,
-                    );
+                    if (_formKey.currentState!.validate()) {
+                      _loginAuthorization(
+                        context,
+                        emailController,
+                        passwordController,
+                        loginCubit,
+                      );
+                    }
                   },
                   label: 'Password',
                   prefix: Icons.lock_outline,
@@ -135,7 +143,7 @@ class LoginScreen extends StatelessWidget {
                 const SizedBox(
                   height: 30,
                 ),
-            Conditional.single(
+                Conditional.single(
                   context: context,
                   conditionBuilder: (BuildContext context) {
                     return state is! LoginLoading;
@@ -143,17 +151,18 @@ class LoginScreen extends StatelessWidget {
                   widgetBuilder: (BuildContext context) {
                     return defaultButton(
                       onPressedFunction: () {
-                        _loginAuthorization(
-                          context,
-                          _emailController,
-                          _passwordController,
-                          _loginCubit,
-                        );
+                        if (_formKey.currentState!.validate()) {
+                          _loginAuthorization(
+                            context,
+                            emailController,
+                            passwordController,
+                            loginCubit,
+                          );
+                        }
                       },
                       text: 'login',
                     );
                   },
-
                   fallbackBuilder: (context) => Center(
                     child: AdaptiveCircularProgressIndicator(
                       os: OperatingSystem.getOs(),
@@ -166,9 +175,11 @@ class LoginScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Don\'t Have An Account'),
+                    const Text('Don\'t Have An Account'),
                     defaultTextButton(
-                      onPressedFunction: () => _goToRegisterScreen(context),
+                      onPressedFunction: () {
+                        _goToRegisterScreen(context);
+                      },
                       text: 'Register',
                     )
                   ],
@@ -182,17 +193,17 @@ class LoginScreen extends StatelessWidget {
   }
 
   void _loginAuthorization(
-      BuildContext context,
-      TextEditingController _emailController,
-      TextEditingController _passwordController,
-      LoginCubit _loginCubit,
-      ) {
+    BuildContext context,
+    TextEditingController emailController,
+    TextEditingController passwordController,
+    LoginCubit loginCubit,
+  ) {
     if (_formKey.currentState!.validate()) {
       FocusScope.of(context).unfocus();
 
-      _loginCubit.userLogin(
-        email: _emailController.text,
-        password: _passwordController.text,
+      loginCubit.userLogin(
+        email: emailController.text,
+        password: passwordController.text,
       );
     }
   }

@@ -1,8 +1,7 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:pre/shared/services/local/cahce_helper.dart';
 
 part 'login_state.dart';
 
@@ -11,20 +10,13 @@ class LoginCubit extends Cubit<LoginState> {
   static LoginCubit get(context) => BlocProvider.of(context);
 
   // userLogin
-  void userLogin({
-    required String email,
-    required String password,
-  }) async {
+  void userLogin({required String email, required String password}) async {
     emit(LoginLoading());
-
     try {
-      UserCredential userCredential =
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      // print('userLogin -- ${userCredential.user!.email}');
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+      CacheHelper.saveCacheData(key: 'login', value: true);
+      CacheHelper.saveCacheData(key: 'uId', value: userCredential.user!.uid);
       emit(LoginSucess(userCredential.user!.uid));
     } on FirebaseAuthException catch (error) {
       if (error.code == 'user-not-found') {
@@ -44,9 +36,8 @@ class LoginCubit extends Cubit<LoginState> {
   void changePasswordVisibality() {
     isPassword = !isPassword;
     suffix =
-    isPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined;
+        isPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined;
 
     emit(ChangePasswordVisibality());
   }
-
 }
